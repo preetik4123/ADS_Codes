@@ -1,0 +1,271 @@
+#include <iostream>
+#include <stack>
+#include <queue>
+using namespace std;
+
+class Node {
+public:
+    int data;
+    Node* left;
+    Node* right;
+
+    Node(int value) {
+        data = value;
+        left = right = nullptr;
+    }
+};
+
+class BinaryTree {
+public:
+    Node* root;
+
+    BinaryTree() { root = nullptr; }
+
+    void createNode(int value);
+    void Inorder(Node* node);
+    void Preorder(Node* node);
+    void Postorder(Node* node);
+    Node* deleteNode(Node* node, int key);
+    void levelWisePrinting();
+    void nonRecursiveInorder();
+    void nonRecursivePreorder();
+    void nonRecursivePostorder();
+    void menu();
+    Node* search(Node* node, int key);
+
+private:
+    Node* minValueNode(Node* node);
+};
+
+void BinaryTree::createNode(int value) {
+    Node* temp = new Node(value);
+    if (!root) {
+        root = temp;
+        return;
+    }
+    Node* current = root;
+    while (true) {
+        if (value < current->data) {
+            if (!current->left) {
+                current->left = temp;
+                break;
+            }
+            current = current->left;
+        } else {
+            if (!current->right) {
+                current->right = temp;
+                break;
+            }
+            current = current->right;
+        }
+    }
+}
+
+void BinaryTree::Inorder(Node* node) {
+    if (!node) return;
+    Inorder(node->left);
+    cout << node->data << " ";
+    Inorder(node->right);
+}
+
+void BinaryTree::Preorder(Node* node) {
+    if (!node) return;
+    cout << node->data << " ";
+    Preorder(node->left);
+    Preorder(node->right);
+}
+
+void BinaryTree::Postorder(Node* node) {
+    if (!node) return;
+    Postorder(node->left);
+    Postorder(node->right);
+    cout << node->data << " ";
+}
+
+Node* BinaryTree::minValueNode(Node* node) {
+    while (node && node->left) node = node->left;
+    return node;
+}
+
+Node* BinaryTree::deleteNode(Node* root, int key) {
+    if (!root) {
+        cout << "Value not found in the tree.\n";
+        return nullptr;
+    }
+    if (key < root->data) {
+        root->left = deleteNode(root->left, key);
+    } else if (key > root->data) {
+        root->right = deleteNode(root->right, key);
+    } else {
+        if (!root->left) {
+            Node* temp = root->right;
+            delete root;
+            return temp;
+        }
+        if (!root->right) {
+            Node* temp = root->left;
+            delete root;
+            return temp;
+        }
+        Node* temp = minValueNode(root->right);
+        root->data = temp->data;
+        root->right = deleteNode(root->right, temp->data);
+    }
+    cout << "Required value is deleted\n";
+    return root;
+}
+
+void BinaryTree::levelWisePrinting() {
+    if (!root) {
+        cout << "Tree is empty.\n";
+        return;
+    }
+    queue<Node*> q;
+    q.push(root);
+    cout << "\nLevel-wise traversal: ";
+    while (!q.empty()) {
+        Node* current = q.front();
+        q.pop();
+        cout << current->data << " ";
+        if (current->left) q.push(current->left);
+        if (current->right) q.push(current->right);
+    }
+    cout << endl;
+}
+
+void BinaryTree::nonRecursiveInorder() {
+    if (!root) {
+        cout << "Tree is empty!" << endl;
+        return;
+    }
+    stack<Node*> s;
+    Node* current = root;
+    cout << "Non-Recursive Inorder: ";
+    while (current || !s.empty()) {
+        while (current) {
+            s.push(current);
+            current = current->left;
+        }
+        current = s.top();
+        s.pop();
+        cout << current->data << " ";
+        current = current->right;
+    }
+    cout << endl;
+}
+
+void BinaryTree::nonRecursivePreorder() {
+    if (!root) {
+        cout << "Tree is empty!" << endl;
+        return;
+    }
+    stack<Node*> s;
+    s.push(root);
+    cout << "Non-Recursive Preorder: ";
+    while (!s.empty()) {
+        Node* current = s.top();
+        s.pop();
+        cout << current->data << " ";
+        if (current->right) s.push(current->right);
+        if (current->left) s.push(current->left);
+    }
+    cout << endl;
+}
+
+void BinaryTree::nonRecursivePostorder() {
+    if (!root) {
+        cout << "Tree is empty!" << endl;
+        return;
+    }
+    stack<Node*> s1, s2;
+    s1.push(root);
+    cout << "Non-Recursive Postorder: ";
+    while (!s1.empty()) {
+        Node* current = s1.top();
+        s1.pop();
+        s2.push(current);
+        if (current->left) s1.push(current->left);
+        if (current->right) s1.push(current->right);
+    }
+    while (!s2.empty()) {
+        cout << s2.top()->data << " ";
+        s2.pop();
+    }
+    cout << endl;
+}
+
+Node* BinaryTree::search(Node* node, int key) {
+    if (!node || node->data == key) return node;
+    if (key < node->data) return search(node->left, key);
+    return search(node->right, key);
+}
+
+void BinaryTree::menu() {
+    int choice, value;
+    do {
+        cout << "\n======= Binary Tree Menu =======\n";
+        cout << "1. Insert\n";
+        cout << "2. Recursive Inorder\n";
+        cout << "3. Recursive Preorder\n";
+        cout << "4. Recursive Postorder\n";
+        cout << "5. Delete Node\n";
+        cout << "6. Level-wise Printing\n";
+        cout << "7. Non-Recursive Inorder\n";
+        cout << "8. Non-Recursive Preorder\n";
+        cout << "9. Non-Recursive Postorder\n";
+        cout << "10. Quit\n";
+        cout << "Enter your choice: ";
+        cin >> choice;
+
+        switch (choice) {
+            case 1:
+                cout << "Enter value: ";
+                cin >> value;
+                createNode(value);
+                break;
+            case 2:
+                cout << "Recursive Inorder: ";
+                Inorder(root);
+                cout << endl;
+                break;
+            case 3:
+                cout << "Recursive Preorder: ";
+                Preorder(root);
+                cout << endl;
+                break;
+            case 4:
+                cout << "Recursive Postorder: ";
+                Postorder(root);
+                cout << endl;
+                break;
+            case 5:
+                cout << "Enter value to delete: ";
+                cin >> value;
+                root = deleteNode(root, value);
+                break;
+            case 6:
+                levelWisePrinting();
+                break;
+            case 7:
+                nonRecursiveInorder();
+                break;
+            case 8:
+                nonRecursivePreorder();
+                break;
+            case 9:
+                nonRecursivePostorder();
+                break;
+            case 10:
+                cout << "Exiting program.......\n";
+                break;
+            default:
+                cout << "Invalid choice!\n";
+        }
+    } while (choice != 10);
+}
+
+int main() {
+    BinaryTree bt;
+    bt.menu();
+    return 0;
+}
