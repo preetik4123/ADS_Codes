@@ -1,0 +1,165 @@
+#include <iostream> 
+using namespace std; 
+ 
+class ThreadedBinaryTree { 
+private: 
+    class Node { 
+    public: 
+        int data; 
+        Node *left, *right; 
+        int lbit, rbit; 
+ 
+        Node(int val) { 
+            data = val; 
+            left = right = nullptr; 
+            lbit = rbit = 0; 
+        } 
+    }; 
+ 
+    Node *root, *head; 
+ 
+public: 
+    ThreadedBinaryTree(); 
+    void create(); 
+    void insert(Node *temp); 
+    void inorder(); 
+    void preorder(); 
+    void displayMenu(); 
+    void executeMenu(); 
+}; 
+ 
+ThreadedBinaryTree::ThreadedBinaryTree() { 
+    root = nullptr; 
+    head = nullptr; 
+} 
+ 
+void ThreadedBinaryTree::create() { 
+    char ch; 
+    do { 
+        int val; 
+        cout << "Enter data: "; 
+        cin >> val; 
+        Node *temp = new Node(val); 
+        
+        if (root == nullptr) { 
+            root = temp; 
+            head = new Node(999); 
+            head->right = head; 
+            head->rbit = 1; 
+            head->left = root; 
+            head->lbit = 1; 
+            root->left = head; 
+            root->right = head; 
+        } else { 
+            insert(temp); 
+        } 
+        
+        cout << "Do you want to insert more nodes? (y/n): "; 
+        cin >> ch; 
+    } while (ch == 'y'); 
+} 
+ 
+void ThreadedBinaryTree::insert(Node *temp) { 
+    Node *current = root, *parent = nullptr; 
+    while (current != head) { 
+        parent = current; 
+        if (temp->data < current->data) { 
+            if (current->lbit == 1) 
+                current = current->left; 
+            else 
+                break; 
+        } else { 
+            if (current->rbit == 1) 
+                current = current->right; 
+            else 
+                break; 
+        } 
+    } 
+ 
+    if (temp->data < parent->data) { 
+        temp->left = parent->left; 
+        temp->right = parent; 
+        parent->left = temp; 
+        parent->lbit = 1; 
+    } else { 
+        temp->right = parent->right; 
+        temp->left = parent; 
+        parent->right = temp; 
+        parent->rbit = 1; 
+    } 
+} 
+ 
+void ThreadedBinaryTree::inorder() { 
+    Node *current = head->left; 
+    while (current != head) { 
+        while (current->lbit == 1) 
+            current = current->left; 
+        cout << current->data << " "; 
+        
+        while (current->rbit == 0) { 
+            current = current->right; 
+            if (current == head) return; 
+            cout << current->data << " "; 
+        } 
+        current = current->right; 
+    } 
+} 
+ 
+void ThreadedBinaryTree::preorder() { 
+    Node *current = head->left; 
+    while (current != head) { 
+        cout << current->data << " "; 
+        
+        if (current->lbit == 1) 
+            current = current->left; 
+        else { 
+            while (current->rbit == 0 && current->right != head) 
+                current = current->right; 
+            current = current->right; 
+        } 
+    } 
+} 
+ 
+void ThreadedBinaryTree::displayMenu() { 
+    cout << "\nMenu:\n"; 
+    cout << "1. Insert Node\n"; 
+    cout << "2. Inorder Traversal\n"; 
+    cout << "3. Preorder Traversal\n"; 
+    cout << "4. Exit\n"; 
+} 
+ 
+void ThreadedBinaryTree::executeMenu() { 
+    int choice; 
+    do { 
+        displayMenu(); 
+        cout << "Enter your choice: "; 
+        cin >> choice; 
+        switch (choice) { 
+        case 1: 
+            create(); 
+            break; 
+        case 2: 
+            cout << "\nInorder Traversal: ";     
+            inorder(); 
+            cout << endl; 
+            break; 
+        case 3: 
+            cout << "\nPreorder Traversal: "; 
+            preorder(); 
+            cout << endl; 
+            break; 
+        case 4: 
+            cout << "Exiting program...\n"; 
+            break; 
+        default: 
+            cout << "Invalid choice, please try again.\n"; 
+        } 
+    } while (choice != 4); 
+} 
+ 
+int main() { 
+    ThreadedBinaryTree tree; 
+    tree.executeMenu(); 
+    return 0; 
+} 
+ 
