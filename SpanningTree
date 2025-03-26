@@ -1,0 +1,72 @@
+#include <iostream>
+#include <algorithm>
+
+using namespace std;
+
+#define INF 9999
+
+int main() {
+    int V1; // Number of vertices
+    cout << "Enter the total number of vertices: ";
+    cin >> V1;
+
+    int G[V1][V1]; // Graph adjacency matrix
+    bool selected[V1]; // Tracks selected nodes for MST
+    int no_edge = 0, cost_path = 0;
+
+    // Input graph matrix
+    for (int i = 0; i < V1; i++) {
+        for (int j = 0; j < V1; j++) {
+            if (i == j) {
+                G[i][j] = INF; // No self-loops
+            } else if (j > i) {
+                cout << "Enter weight from " << i << " to " << j << ": ";
+                cin >> G[i][j];
+                if (G[i][j] == 0) G[i][j] = INF; // Replace 0 with INF for non-edges
+                G[j][i] = G[i][j]; // Undirected graph
+            }
+        }
+    }
+
+    // Display input graph matrix
+    cout << "\nAdjacency Matrix:\n";
+    for (int i = 0; i < V1; i++) {
+        for (int j = 0; j < V1; j++) {
+            cout << (G[i][j] == INF ? "INF" : to_string(G[i][j])) << " ";
+        }
+        cout << endl;
+    }
+
+    // Prim's Algorithm
+    fill(selected, selected + V1, false); // Initialize selected array
+    selected[0] = true; // Start from the first node
+
+    cout << "\nEdges in MST:\n";
+    cout << "Edge : Weight\n";
+
+    while (no_edge < V1 - 1) {
+        int min = INF, x = -1, y = -1;
+
+        for (int i = 0; i < V1; i++) {
+            if (selected[i]) {
+                for (int j = 0; j < V1; j++) {
+                    if (!selected[j] && G[i][j] < min) {
+                        min = G[i][j];
+                        x = i;
+                        y = j;
+                    }
+                }
+            }
+        }
+
+        if (x != -1 && y != -1) {
+            cout << x << " --> " << y << " : " << G[x][y] << endl;
+            cost_path += G[x][y];
+            selected[y] = true;
+            no_edge++;
+        }
+    }
+
+    cout << "\nMinimum cost of MST: " << cost_path << endl;
+    return 0;
+}
