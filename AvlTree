@@ -263,3 +263,261 @@ int main() {
         }
     }
 }
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#include <iostream>
+#include <queue>
+#include <stack>
+using namespace std;
+
+class avlnode {
+public:
+    int data;
+    avlnode *left, *right;
+    avlnode(int val) : data(val), left(NULL), right(NULL) {}
+};
+
+class avlTree {
+    avlnode *root;
+
+public:
+    avlTree() { root = NULL; }
+
+    int height(avlnode *);
+    int diff(avlnode *);
+    avlnode *rr_rotation(avlnode *);
+    avlnode *ll_rotation(avlnode *);
+    avlnode *lr_rotation(avlnode *);
+    avlnode *rl_rotation(avlnode *);
+    avlnode* balance(avlnode *);
+    avlnode* insert(avlnode *, int);
+    void insert(int val) { root = insert(root, val); }
+
+    void display();
+    void inorder(avlnode *);
+    void inorder();
+    void preorder(avlnode *);
+    void preorder();
+    void postorder(avlnode *);
+    void postorder();
+    void inorder_non_rec();
+    void preorder_non_rec();
+    void postorder_non_rec();
+};
+
+int avlTree::height(avlnode *temp) {
+    if (temp == NULL) return 0;
+    return max(height(temp->left), height(temp->right)) + 1;
+}
+
+int avlTree::diff(avlnode *temp) {
+    return height(temp->left) - height(temp->right);
+}
+
+avlnode *avlTree::rr_rotation(avlnode *parent) {
+    avlnode *temp = parent->right;
+    parent->right = temp->left;
+    temp->left = parent;
+    return temp;
+}
+
+avlnode *avlTree::ll_rotation(avlnode *parent) {
+    avlnode *temp = parent->left;
+    parent->left = temp->right;
+    temp->right = parent;
+    return temp;
+}
+
+avlnode *avlTree::lr_rotation(avlnode *parent) {
+    parent->left = rr_rotation(parent->left);
+    return ll_rotation(parent);
+}
+
+avlnode *avlTree::rl_rotation(avlnode *parent) {
+    parent->right = ll_rotation(parent->right);
+    return rr_rotation(parent);
+}
+
+avlnode *avlTree::balance(avlnode *temp) {
+    int bal_factor = diff(temp);
+    if (bal_factor > 1) {
+        if (diff(temp->left) > 0)
+            temp = ll_rotation(temp);
+        else
+            temp = lr_rotation(temp);
+    } else if (bal_factor < -1) {
+        if (diff(temp->right) > 0)
+            temp = rl_rotation(temp);
+        else
+            temp = rr_rotation(temp);
+    }
+    return temp;
+}
+
+avlnode *avlTree::insert(avlnode *root, int value) {
+    if (root == NULL) return new avlnode(value);
+    if (value < root->data)
+        root->left = insert(root->left, value);
+    else if (value > root->data)
+        root->right = insert(root->right, value);
+    else
+        cout << "Node already exists" << endl;
+    return balance(root);
+}
+
+void avlTree::display() {
+    if (root == NULL) {
+        cout << "Tree is empty.\n";
+        return;
+    }
+    queue<avlnode*> q;
+    q.push(root);
+    cout << "\nAVL Tree (Level-wise Display):\n";
+    while (!q.empty()) {
+        int size = q.size();
+        while (size--) {
+            avlnode *temp = q.front();
+            q.pop();
+            cout << temp->data << " ";
+            if (temp->left) q.push(temp->left);
+            if (temp->right) q.push(temp->right);
+        }
+    }
+    cout << endl;
+}
+
+void avlTree::inorder() {
+    cout << "\nInorder Traversal: ";
+    inorder(root);
+    cout << endl;
+}
+
+void avlTree::inorder(avlnode *tree) {
+    if (tree == NULL) return;
+    inorder(tree->left);
+    cout << tree->data << " ";
+    inorder(tree->right);
+}
+
+void avlTree::preorder() {
+    cout << "\nPreorder Traversal: ";
+    preorder(root);
+    cout << endl;
+}
+
+void avlTree::preorder(avlnode *tree) {
+    if (tree == NULL) return;
+    cout << tree->data << " ";
+    preorder(tree->left);
+    preorder(tree->right);
+}
+
+void avlTree::postorder() {
+    cout << "\nPostorder Traversal: ";
+    postorder(root);
+    cout << endl;
+}
+
+void avlTree::postorder(avlnode *tree) {
+    if (tree == NULL) return;
+    postorder(tree->left);
+    postorder(tree->right);
+    cout << tree->data << " ";
+}
+
+void avlTree::inorder_non_rec() {
+    cout << "\nNon-Recursive Inorder Traversal: ";
+    stack<avlnode*> stk;
+    avlnode *temp = root;
+    while (true) {
+        while (temp != NULL) {
+            stk.push(temp);
+            temp = temp->left;
+        }
+        if (!stk.empty()) {
+            temp = stk.top();
+            stk.pop();
+            cout << temp->data << " ";
+            temp = temp->right;
+        } else break;
+    }
+    cout << endl;
+}
+
+void avlTree::preorder_non_rec() {
+    cout << "\nNon-Recursive Preorder Traversal: ";
+    if (root == NULL) return;
+    stack<avlnode*> stk;
+    stk.push(root);
+    while (!stk.empty()) {
+        avlnode *temp = stk.top();
+        stk.pop();
+        cout << temp->data << " ";
+        if (temp->right) stk.push(temp->right);
+        if (temp->left) stk.push(temp->left);
+    }
+    cout << endl;
+}
+
+void avlTree::postorder_non_rec() {
+    cout << "\nNon-Recursive Postorder Traversal: ";
+    if (root == NULL) return;
+    stack<avlnode*> stk1, stk2;
+    stk1.push(root);
+    while (!stk1.empty()) {
+        avlnode *temp = stk1.top();
+        stk1.pop();
+        stk2.push(temp);
+        if (temp->left) stk1.push(temp->left);
+        if (temp->right) stk1.push(temp->right);
+    }
+    while (!stk2.empty()) {
+        cout << stk2.top()->data << " ";
+        stk2.pop();
+    }
+    cout << endl;
+}
+
+int main() {
+    avlTree avl;
+    int choice, item;
+    while (1) {
+        cout << "\nAVL Tree Operations:\n";
+        cout << "1.Insert\n2.Display\n3.Inorder\n4.Preorder\n5.Postorder\n";
+        cout << "6.Non-Recursive Inorder\n7.Non-Recursive Preorder\n";
+        cout << "8.Non-Recursive Postorder\n9.Exit\nEnter choice: ";
+        cin >> choice;
+        switch (choice) {
+            case 1:
+                cout << "Enter value to insert: ";
+                cin >> item;
+                avl.insert(item);
+                break;
+            case 2:
+                avl.display();
+                break;
+            case 3:
+                avl.inorder();
+                break;
+            case 4:
+                avl.preorder();
+                break;
+            case 5:
+                avl.postorder();
+                break;
+            case 6:
+                avl.inorder_non_rec();
+                break;
+            case 7:
+                avl.preorder_non_rec();
+                break;
+            case 8:
+                avl.postorder_non_rec();
+                break;
+            case 9:
+                return 0;
+            default:
+                cout << "Invalid choice!" << endl;
+        }
+    }
+}
