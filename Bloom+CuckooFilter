@@ -1,0 +1,146 @@
+#include <iostream>
+#include <vector>
+#include <string>
+
+using namespace std;
+
+const int BLOOM_SIZE = 100;
+const int CUCKOO_SIZE = 50;
+
+// =============== Simple Hash Functions ===============
+int simpleHash1(string key, int size) {
+    int sum = 0;
+    for (char ch : key) sum += ch;
+    return sum % size;
+}
+
+int simpleHash2(string key, int size) {
+    int sum = 0;
+    for (int i = 0; i < key.size(); i++) sum += (i + 1) * key[i];
+    return sum % size;
+}
+
+int simpleHash3(string key, int size) {
+    int sum = 0;
+    for (int i = 0; i < key.size(); i++) sum += key[i] * key[i];
+    return sum % size;
+}
+
+// =============== Bloom Filter ===============
+class BloomFilter {
+public:
+    vector<int> bitArray;
+
+    BloomFilter() {
+        bitArray.resize(BLOOM_SIZE, 0);
+    }
+
+    void insert(string key) {
+        int i1 = simpleHash1(key, BLOOM_SIZE);
+        int i2 = simpleHash2(key, BLOOM_SIZE);
+        int i3 = simpleHash3(key, BLOOM_SIZE);
+
+        bitArray[i1] = 1;
+        bitArray[i2] = 1;
+        bitArray[i3] = 1;
+    }
+
+    int search(string key) {
+        int i1 = simpleHash1(key, BLOOM_SIZE);
+        int i2 = simpleHash2(key, BLOOM_SIZE);
+        int i3 = simpleHash3(key, BLOOM_SIZE);
+
+        if (bitArray[i1] == 1 && bitArray[i2] == 1 && bitArray[i3] == 1)
+            return 1;
+        else
+            return 0;
+    }
+};
+
+// =============== Cuckoo Filter ===============
+class CuckooFilter {
+public:
+    vector<string> table;
+    vector<int> occupied;
+
+    CuckooFilter() {
+        table.resize(CUCKOO_SIZE, "");
+        occupied.resize(CUCKOO_SIZE, 0);
+    }
+
+    int insert(string key) {
+        int i1 = simpleHash1(key, CUCKOO_SIZE);
+        int i2 = simpleHash2(key, CUCKOO_SIZE);
+        int i3 = simpleHash3(key, CUCKOO_SIZE);
+
+        if (occupied[i1] == 0) {
+            table[i1] = key;
+            occupied[i1] = 1;
+            return 1;
+        } else if (occupied[i2] == 0) {
+            table[i2] = key;
+            occupied[i2] = 1;
+            return 1;
+        } else if (occupied[i3] == 0) {
+            table[i3] = key;
+            occupied[i3] = 1;
+            return 1;
+        } else {
+            // Try relocating
+            string temp = table[i1];
+            table[i1] = key;
+
+            int newIdx = simpleHash2(temp, CUCKOO_SIZE);
+            if (occupied[newIdx] == 0) {
+                table[newIdx] = temp;
+                occupied[newIdx] = 1;
+                return 1;
+            }
+
+            newIdx = simpleHash3(temp, CUCKOO_SIZE);
+            if (occupied[newIdx] == 0) {
+                table[newIdx] = temp;
+                occupied[newIdx] = 1;
+                return 1;
+            }
+        }
+        return 0;
+    }
+
+    int search(string key) {
+        int i1 = simpleHash1(key, CUCKOO_SIZE);
+        int i2 = simpleHash2(key, CUCKOO_SIZE);
+        int i3 = simpleHash3(key, CUCKOO_SIZE);
+
+        if (occupied[i1] == 1 && table[i1] == key) return 1;
+        else if (occupied[i2] == 1 && table[i2] == key) return 1;
+        else if (occupied[i3] == 1 && table[i3] == key) return 1;
+        else return 0;
+    }
+};
+
+// =============== Main Function ===============
+int main() {
+    BloomFilter bloom;
+    CuckooFilter cuckoo;
+
+    vector<string> items = {"apple", "banana", "grape", "cherry"};
+
+    cout << "=== Bloom Filter ===" << endl;
+    for (string item : items)
+        bloom.insert(item);
+
+    cout << "Search 'grape': " << bloom.search("grape") << endl;
+    cout << "Search 'mango': " << bloom.search("mango") << endl;
+
+    cout << "\n=== Cuckoo Filter ===" << endl;
+    for (string item : items) {
+        int result = cuckoo.insert(item);
+        cout << "Inserted '" << item << "' : " << result << endl;
+    }
+
+    cout << "Search 'banana': " << cuckoo.search("banana") << endl;
+    cout << "Search 'pear': " << cuckoo.search("pear") << endl;
+
+    return 0;
+}
