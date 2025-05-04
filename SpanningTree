@@ -155,4 +155,93 @@ int main() {
 
     return 0;
 }
+---------------------------------------------Kruskal(updated)------------------------------------------
+#include <iostream>
+#include <algorithm>
+using namespace std;
 
+#define MAX 100
+
+class Edge {
+public:
+    int u, v, weight;
+};
+
+class KruskalMST {
+private:
+    Edge edges[MAX];
+    Edge mst[MAX];
+    int parent[MAX];
+    int n, e;
+
+    int find(int i) {
+        if (parent[i] == i)
+            return i;
+        return parent[i] = find(parent[i]);
+    }
+
+    void unionSets(int u, int v) {
+        int set_u = find(u);
+        int set_v = find(v);
+        parent[set_u] = set_v;
+    }
+
+    static bool compare(Edge a, Edge b) {
+        return a.weight < b.weight;
+    }
+
+public:
+    void inputGraph() {
+        cout << "Enter number of vertices: ";
+        cin >> n;
+        cout << "Enter number of edges: ";
+        cin >> e;
+
+        for (int i = 0; i < e; i++) {
+            cout << "Enter edge " << i + 1 << " (u v weight): ";
+            cin >> edges[i].u >> edges[i].v >> edges[i].weight;
+        }
+    }
+
+    void initializeParent() {
+        for (int i = 0; i < n; i++)
+            parent[i] = i;
+    }
+
+    void kruskal() {
+        // Sort edges by weight
+        sort(edges, edges + e, compare);
+
+        int totalWeight = 0;
+        int count = 0;
+
+        for (int i = 0; i < e && count < n - 1; i++) {
+            int u = edges[i].u;
+            int v = edges[i].v;
+            int set_u = find(u);
+            int set_v = find(v);
+
+            if (set_u != set_v) {
+                mst[count++] = edges[i];
+                totalWeight += edges[i].weight;
+                unionSets(u, v);
+            }
+        }
+
+        // Display MST
+        cout << "\nEdges in Minimum Spanning Tree:\n";
+        for (int i = 0; i < count; i++) {
+            cout << mst[i].u << " - " << mst[i].v << " : " << mst[i].weight << endl;
+        }
+        cout << "Total weight: " << totalWeight << endl;
+    }
+};
+
+int main() {
+    KruskalMST graph;
+    graph.inputGraph();
+    graph.initializeParent();
+    graph.kruskal();
+
+    return 0;
+}
