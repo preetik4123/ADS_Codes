@@ -1,0 +1,64 @@
+#include <iostream>
+#include <vector>
+#include <string>
+using namespace std;
+
+const int SIZE = 20;
+
+int hash1(string key) {
+    int sum = 0;
+    for (char c : key) sum += c;
+    return sum % SIZE;
+}
+
+int hash2(string key) {
+    int sum = 0;
+    for (int i = 0; i < key.size(); i++) sum += (i + 1) * key[i];
+    return sum % SIZE;
+}
+
+int main() {
+    vector<string> cuckoo(SIZE, "");
+    int n;
+    cout << "How many words to insert in Cuckoo Filter? ";
+    cin >> n;
+
+    for (int i = 0; i < n; i++) {
+        string word;
+        cout << "Enter word " << i + 1 << ": ";
+        cin >> word;
+
+        int idx1 = hash1(word);
+        int idx2 = hash2(word);
+
+        if (cuckoo[idx1] == "") {
+            cuckoo[idx1] = word;
+            cout << "Inserted at position " << idx1 << endl;
+        } else if (cuckoo[idx2] == "") {
+            cuckoo[idx2] = word;
+            cout << "Inserted at position " << idx2 << endl;
+        } else {
+            cout << "Both positions occupied! Cannot insert " << word << endl;
+        }
+    }
+
+    cout << "\nHow many words to search? ";
+    int m;
+    cin >> m;
+    for (int i = 0; i < m; i++) {
+        string query;
+        cout << "Enter search word " << i + 1 << ": ";
+        cin >> query;
+
+        int idx1 = hash1(query);
+        int idx2 = hash2(query);
+
+        if (cuckoo[idx1] == query || cuckoo[idx2] == query)
+            cout << query << " is present.\n";
+        else
+            cout << query << " is not present.\n";
+    }
+
+    return 0;
+}
+Cuckoo
