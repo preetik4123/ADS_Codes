@@ -5,171 +5,187 @@ using namespace std;
 
 class Node {
 public:
-    int data;
+    int data, height;
     Node* left;
     Node* right;
 
     Node(int value) {
         data = value;
+        height = 1;
         left = right = nullptr;
     }
 };
 
 class AVLTree {
-private:
+public:
     Node* root;
 
-    int height(Node* node);
-    int balanceFactor(Node* node);
-    Node* rotateRight(Node* y);
-    Node* rotateLeft(Node* x);
-    Node* rotateLeftRight(Node* node);
-    Node* rotateRightLeft(Node* node);
-    Node* balance(Node* node);
-    Node* insert(Node* node, int value);
-    void inorder(Node* node);
-    void preorder(Node* node);
-    void postorder(Node* node);
-
-public:
     AVLTree() { root = nullptr; }
 
-    void insert(int value) { root = insert(root, value); }
-    void displayLevelWise();
-    void inorderTraversal();
-    void preorderTraversal();
-    void postorderTraversal();
-    void inorderNonRecursive();
-    void preorderNonRecursive();
-    void postorderNonRecursive();
+    int height(Node* n);
+    int getBalance(Node* n);
+    Node* rightRotate(Node* y);
+    Node* leftRotate(Node* x);
+    Node* insert(Node* node, int key);
+    Node* minValueNode(Node* node);
+    Node* deleteNode(Node* root, int key);
+    Node* search(Node* node, int key);
+
+    void Inorder(Node* node);
+    void Preorder(Node* node);
+    void Postorder(Node* node);
+
+    void nonRecursiveInorder();
+    void nonRecursivePreorder();
+    void nonRecursivePostorder();
+    void levelOrder();
+
+    void menu();
 };
 
-int AVLTree::height(Node* node) {
-    if (!node) return 0;
-    return max(height(node->left), height(node->right)) + 1;
+int AVLTree::height(Node* n) {
+    return n ? n->height : 0;
 }
 
-int AVLTree::balanceFactor(Node* node) {
-    return height(node->left) - height(node->right);
+int AVLTree::getBalance(Node* n) {
+    return n ? height(n->left) - height(n->right) : 0;
 }
 
-Node* AVLTree::rotateRight(Node* y) {
+Node* AVLTree::rightRotate(Node* y) {
     Node* x = y->left;
-    y->left = x->right;
+    Node* T2 = x->right;
     x->right = y;
+    y->left = T2;
+    y->height = max(height(y->left), height(y->right)) + 1;
+    x->height = max(height(x->left), height(x->right)) + 1;
     return x;
 }
 
-Node* AVLTree::rotateLeft(Node* x) {
+Node* AVLTree::leftRotate(Node* x) {
     Node* y = x->right;
-    x->right = y->left;
+    Node* T2 = y->left;
     y->left = x;
+    x->right = T2;
+    x->height = max(height(x->left), height(x->right)) + 1;
+    y->height = max(height(y->left), height(y->right)) + 1;
     return y;
 }
 
-Node* AVLTree::rotateLeftRight(Node* node) {
-    node->left = rotateLeft(node->left);
-    return rotateRight(node);
-}
+Node* AVLTree::insert(Node* node, int key) {
+    if (!node) return new Node(key);
 
-Node* AVLTree::rotateRightLeft(Node* node) {
-    node->right = rotateRight(node->right);
-    return rotateLeft(node);
-}
+    if (key < node->data)
+        node->left = insert(node->left, key);
+    else if (key > node->data)
+        node->right = insert(node->right, key);
+    else
+        return node; // Duplicate keys not allowed
 
-Node* AVLTree::balance(Node* node) {
-    int bf = balanceFactor(node);
-    if (bf > 1) {
-        if (balanceFactor(node->left) >= 0) {
-            node = rotateRight(node);
-        } else {
-            node = rotateLeftRight(node);
-        }
-    } else if (bf < -1) {
-        if (balanceFactor(node->right) <= 0) {
-            node = rotateLeft(node);
-        } else {
-            node = rotateRightLeft(node);
-        }
+    node->height = 1 + max(height(node->left), height(node->right));
+    int balance = getBalance(node);
+
+    if (balance > 1 && key < node->left->data)
+        return rightRotate(node);
+    if (balance < -1 && key > node->right->data)
+        return leftRotate(node);
+    if (balance > 1 && key > node->left->data) {
+        node->left = leftRotate(node->left);
+        return rightRotate(node);
     }
+    if (balance < -1 && key < node->right->data) {
+        node->right = rightRotate(node->right);
+        return leftRotate(node);
+    }
+
     return node;
 }
 
-Node* AVLTree::insert(Node* node, int value) {
-    if (!node) return new Node(value);
-
-    if (value < node->data) {
-        node->left = insert(node->left, value);
-    } else if (value > node->data) {
-        node->right = insert(node->right, value);
-    } else {
-        cout << "Duplicate value not allowed.\n";
-    }
-    return balance(node);
+Node* AVLTree::minValueNode(Node* node) {
+    Node* current = node;
+    while (current->left)
+        current = current->left;
+    return current;
 }
 
-void AVLTree::inorder(Node* node) {
-    if (!node) return;
-    inorder(node->left);
-    cout << node->data << " ";
-    inorder(node->right);
-}
-
-void AVLTree::preorder(Node* node) {
-    if (!node) return;
-    cout << node->data << " ";
-    preorder(node->left);
-    preorder(node->right);
-}
-
-void AVLTree::postorder(Node* node) {
-    if (!node) return;
-    postorder(node->left);
-    postorder(node->right);
-    cout << node->data << " ";
-}
-
-void AVLTree::displayLevelWise() {
+Node* AVLTree::deleteNode(Node* root, int key) {
     if (!root) {
-        cout << "Tree is empty.\n";
-        return;
+        cout << "Value not found in the tree.\n";
+        return nullptr;
     }
-    queue<Node*> q;
-    q.push(root);
-    cout << "\nLevel-wise traversal: ";
-    while (!q.empty()) {
-        Node* current = q.front();
-        q.pop();
-        cout << current->data << " ";
-        if (current->left) q.push(current->left);
-        if (current->right) q.push(current->right);
+
+    if (key < root->data)
+        root->left = deleteNode(root->left, key);
+    else if (key > root->data)
+        root->right = deleteNode(root->right, key);
+    else {
+        if (!root->left || !root->right) {
+            Node* temp = root->left ? root->left : root->right;
+            if (!temp) {
+                temp = root;
+                root = nullptr;
+            } else
+                *root = *temp;
+            delete temp;
+        } else {
+            Node* temp = minValueNode(root->right);
+            root->data = temp->data;
+            root->right = deleteNode(root->right, temp->data);
+        }
     }
-    cout << endl;
-}
 
-void AVLTree::inorderTraversal() {
-    cout << "Inorder Traversal: ";
-    inorder(root);
-    cout << endl;
-}
+    if (!root) return nullptr;
 
-void AVLTree::preorderTraversal() {
-    cout << "Preorder Traversal: ";
-    preorder(root);
-    cout << endl;
-}
+    root->height = 1 + max(height(root->left), height(root->right));
+    int balance = getBalance(root);
 
-void AVLTree::postorderTraversal() {
-    cout << "Postorder Traversal: ";
-    postorder(root);
-    cout << endl;
-}
-
-void AVLTree::inorderNonRecursive() {
-    if (!root) {
-        cout << "Tree is empty!\n";
-        return;
+    if (balance > 1 && getBalance(root->left) >= 0)
+        return rightRotate(root);
+    if (balance > 1 && getBalance(root->left) < 0) {
+        root->left = leftRotate(root->left);
+        return rightRotate(root);
     }
+    if (balance < -1 && getBalance(root->right) <= 0)
+        return leftRotate(root);
+    if (balance < -1 && getBalance(root->right) > 0) {
+        root->right = rightRotate(root->right);
+        return leftRotate(root);
+    }
+
+    cout << "Required value is deleted\n";
+    return root;
+}
+
+Node* AVLTree::search(Node* node, int key) {
+    if (!node || node->data == key)
+        return node;
+    if (key < node->data)
+        return search(node->left, key);
+    return search(node->right, key);
+}
+
+void AVLTree::Inorder(Node* node) {
+    if (!node) return;
+    Inorder(node->left);
+    cout << node->data << " ";
+    Inorder(node->right);
+}
+
+void AVLTree::Preorder(Node* node) {
+    if (!node) return;
+    cout << node->data << " ";
+    Preorder(node->left);
+    Preorder(node->right);
+}
+
+void AVLTree::Postorder(Node* node) {
+    if (!node) return;
+    Postorder(node->left);
+    Postorder(node->right);
+    cout << node->data << " ";
+}
+
+void AVLTree::nonRecursiveInorder() {
+    if (!root) { cout << "Tree is empty!" << endl; return; }
     stack<Node*> s;
     Node* current = root;
     cout << "Non-Recursive Inorder: ";
@@ -178,25 +194,20 @@ void AVLTree::inorderNonRecursive() {
             s.push(current);
             current = current->left;
         }
-        current = s.top();
-        s.pop();
+        current = s.top(); s.pop();
         cout << current->data << " ";
         current = current->right;
     }
     cout << endl;
 }
 
-void AVLTree::preorderNonRecursive() {
-    if (!root) {
-        cout << "Tree is empty!\n";
-        return;
-    }
+void AVLTree::nonRecursivePreorder() {
+    if (!root) { cout << "Tree is empty!" << endl; return; }
     stack<Node*> s;
     s.push(root);
     cout << "Non-Recursive Preorder: ";
     while (!s.empty()) {
-        Node* current = s.top();
-        s.pop();
+        Node* current = s.top(); s.pop();
         cout << current->data << " ";
         if (current->right) s.push(current->right);
         if (current->left) s.push(current->left);
@@ -204,21 +215,17 @@ void AVLTree::preorderNonRecursive() {
     cout << endl;
 }
 
-void AVLTree::postorderNonRecursive() {
-    if (!root) {
-        cout << "Tree is empty!\n";
-        return;
-    }
+void AVLTree::nonRecursivePostorder() {
+    if (!root) { cout << "Tree is empty!" << endl; return; }
     stack<Node*> s1, s2;
     s1.push(root);
+    cout << "Non-Recursive Postorder: ";
     while (!s1.empty()) {
-        Node* current = s1.top();
-        s1.pop();
+        Node* current = s1.top(); s1.pop();
         s2.push(current);
         if (current->left) s1.push(current->left);
         if (current->right) s1.push(current->right);
     }
-    cout << "Non-Recursive Postorder: ";
     while (!s2.empty()) {
         cout << s2.top()->data << " ";
         s2.pop();
@@ -226,46 +233,86 @@ void AVLTree::postorderNonRecursive() {
     cout << endl;
 }
 
-int main() {
-    AVLTree tree;
+void AVLTree::levelOrder() {
+    if (!root) { cout << "Tree is empty.\n"; return; }
+    queue<Node*> q;
+    q.push(root);
+    cout << "\nLevel-wise traversal: ";
+    while (!q.empty()) {
+        Node* current = q.front(); q.pop();
+        cout << current->data << " ";
+        if (current->left) q.push(current->left);
+        if (current->right) q.push(current->right);
+    }
+    cout << endl;
+}
+
+void AVLTree::menu() {
     int choice, value;
-    while (true) {
-        cout << "\nAVL Tree Operations:\n";
-        cout << "1. Insert\n2. Display Level-wise\n3. Inorder\n4. Preorder\n5. Postorder\n";
-        cout << "6. Non-Recursive Inorder\n7. Non-Recursive Preorder\n8. Non-Recursive Postorder\n9. Exit\n";
-        cout << "Enter choice: ";
+    do {
+        cout << "\n======= AVL Tree Menu =======\n";
+        cout << "1. Insert\n";
+        cout << "2. Recursive Inorder\n";
+        cout << "3. Recursive Preorder\n";
+        cout << "4. Recursive Postorder\n";
+        cout << "5. Delete Node\n";
+        cout << "6. Level-wise Printing\n";
+        cout << "7. Non-Recursive Inorder\n";
+        cout << "8. Non-Recursive Preorder\n";
+        cout << "9. Non-Recursive Postorder\n";
+        cout << "10. Quit\n";
+        cout << "Enter your choice: ";
         cin >> choice;
+
         switch (choice) {
             case 1:
-                cout << "Enter value to insert: ";
+                cout << "Enter value: ";
                 cin >> value;
-                tree.insert(value);
+                root = insert(root, value);
                 break;
             case 2:
-                tree.displayLevelWise();
+                cout << "Recursive Inorder: ";
+                Inorder(root);
+                cout << endl;
                 break;
             case 3:
-                tree.inorderTraversal();
+                cout << "Recursive Preorder: ";
+                Preorder(root);
+                cout << endl;
                 break;
             case 4:
-                tree.preorderTraversal();
+                cout << "Recursive Postorder: ";
+                Postorder(root);
+                cout << endl;
                 break;
             case 5:
-                tree.postorderTraversal();
+                cout << "Enter value to delete: ";
+                cin >> value;
+                root = deleteNode(root, value);
                 break;
             case 6:
-                tree.inorderNonRecursive();
+                levelOrder();
                 break;
             case 7:
-                tree.preorderNonRecursive();
+                nonRecursiveInorder();
                 break;
             case 8:
-                tree.postorderNonRecursive();
+                nonRecursivePreorder();
                 break;
             case 9:
-                return 0;
+                nonRecursivePostorder();
+                break;
+            case 10:
+                cout << "Exiting program.......\n";
+                break;
             default:
                 cout << "Invalid choice!\n";
         }
-    }
+    } while (choice != 10);
+}
+
+int main() {
+    AVLTree avl;
+    avl.menu();
+    return 0;
 }
